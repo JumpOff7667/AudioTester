@@ -1,5 +1,26 @@
 <resources>
     <string name="app_name">Audio Tester</string>
-    <string name="play_headset">Play audio through headset</string>
-    <string name="play_speaker">Play audio through speaker</string>
+    <string name="play">Play</string>
+    <string name="stop">Stop</string>
+    <string name="record">Record</string>
+    <string name="playing">Playing</string>
+
+    <string-array name="inputs_array">
+        <item>Camcorder</item>
+        <item>Default</item>
+        <item>Mic</item>
+        <item>Remote Submix</item>
+        <item>Unprocessed</item>
+        <item>Voice call</item>
+        <item>Voice communication</item>
+        <item>Voice downlink</item>
+        <item>Voice performance</item>
+        <item>Voice recognition</item>
+        <item>Voice uplink</item>
+    </string-array>
+
+    <string-array name="outputs_array">
+        <item>Receiver</item>
+        <item>Speaker</item>
+    </string-array>
 </resources>

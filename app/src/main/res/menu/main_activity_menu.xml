@@ -3,11 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/audioInMenuItem"
-        android:title="Audio In"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/audioOutMenuItem"
         android:title="Audio Out"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/audioInMenuItem"
+        android:title="Audio In"
         app:showAsAction="never" />
 </menu>
