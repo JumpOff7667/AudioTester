@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/audioInMenuItem"
+        android:title="Audio In"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/audioOutMenuItem"
+        android:title="Audio Out"
+        app:showAsAction="never" />
+</menu>

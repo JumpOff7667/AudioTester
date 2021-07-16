@@ -1,0 +1,2 @@
+rootProject.name = "Audio Tester"
+include ':app'

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Audio Tester</string>
+    <string name="play_headset">Play audio through headset</string>
+    <string name="play_speaker">Play audio through speaker</string>
+</resources>
