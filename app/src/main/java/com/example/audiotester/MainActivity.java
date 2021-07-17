@@ -2,15 +2,12 @@ package com.example.audiotester;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -20,31 +17,22 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int TEST_OUT = 1;
-    public static final int TEST_IN = 2;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
-
-    private MediaPlayer mMediaPlayer;
-    private MediaRecorder mMediaRecorder;
-    private AudioHelper mAudioHelper;
-
-    private int mTestMode = TEST_OUT;
-    private boolean mRecording = false;
 
     private Spinner mSpinner;
     private Button mActionButton;
 
+    private MediaTester mMediaTester;
     private ArrayAdapter<CharSequence> mOutputAdapter;
     private ArrayAdapter<CharSequence> mInputAdapter;
 
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
-    private final String [] permissions = {Manifest.permission.RECORD_AUDIO};
+    private final String[] permissions = {Manifest.permission.RECORD_AUDIO};
 
     @Override
     public void onBackPressed() {
@@ -58,9 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
 
-        initializeAudioHelper();
-        initializeMediaPlayer();
-        initializeMediaRecorder();
+        initializeMediaTester();
         initializeSpinner();
         initializeActionButton();
 
@@ -78,19 +64,20 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.audioInMenuItem) {
-            if (mTestMode == TEST_IN) {
+            if (mMediaTester.getTestMode() == MediaTester.TEST_IN) {
                 return false;
             }
 
             setAudioInTestMode();
-            mTestMode = TEST_IN;
+            mMediaTester.setTestMode(MediaTester.TEST_IN);
 
             return true;
         } else if (item.getItemId() == R.id.audioOutMenuItem) {
-            if (mTestMode == TEST_OUT) {
+            if (mMediaTester.getTestMode() == MediaTester.TEST_OUT) {
                 return false;
             }
 
@@ -100,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            mTestMode = TEST_OUT;
+            mMediaTester.setTestMode(MediaTester.TEST_OUT);
 
             return true;
         }
@@ -114,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             permissionToRecordAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
         }
-        if (!permissionToRecordAccepted ) finish();
+        if (!permissionToRecordAccepted) finish();
 
     }
 
@@ -122,65 +109,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        mMediaPlayer.release();
-        mMediaRecorder.release();
+        mMediaTester.release();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private void recordMic(View view) {
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.stop();
-            mMediaPlayer.reset();
 
-            mActionButton.setText(R.string.record);
-
-            return;
-        }
-
-        if (mRecording) {
-            mMediaRecorder.stop();
-
-            try {
-                mMediaPlayer.setDataSource(this.getFilesDir() + "/mic_record.mp4");
-                mMediaPlayer.prepare();
-                mMediaPlayer.start();
-
-                mRecording = false;
-                ((Button) view).setText(R.string.playing);
-            } catch (IOException | RuntimeException e) {
-                e.printStackTrace();
-                mMediaPlayer.reset();
-            }
-
-            return;
-        }
-
-        mMediaRecorder.setAudioSource(getInputAudioSource());
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mMediaRecorder.setOutputFile(new File(this.getFilesDir(), "mic_record.mp4"));
-
-        try {
-            mMediaRecorder.prepare();
-            mMediaRecorder.start();
-
-            mRecording = true;
-            ((Button) view).setText(R.string.stop);
-        } catch (IOException | RuntimeException e) {
-            e.printStackTrace();
-            mMediaRecorder.reset();
-        }
-
-    }
-
-    private int getOutputAudioSource() {
+    private int getSelectedOutputAudioSource() {
         return mSpinner.getSelectedItem()
                 .toString()
                 .equals("Receiver") ? AudioHelper.TYPE_RECEIVER : AudioHelper.TYPE_SPEAKER;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    private int getInputAudioSource() {
+    private int getSelectedInputAudioSource() {
         switch (mSpinner.getSelectedItem().toString()) {
             case "Camcorder":
                 return MediaRecorder.AudioSource.CAMCORDER;
@@ -207,63 +147,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void playAudio(View view) {
-        mAudioHelper.setDestination(getOutputAudioSource());
-
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.stop();
-            mActionButton.setText(R.string.play);
-            return;
-        }
-
-        try {
-            mMediaPlayer.prepare();
-            mMediaPlayer.start();
-        } catch (IOException | RuntimeException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void setAudioOutTestMode() throws IOException {
-        mMediaPlayer.reset();
-        mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse("android.resource://com.example.audiotester/" + R.raw.rickroll));
-
-        mMediaPlayer.setOnCompletionListener((mediaPlayer) -> mActionButton.setText(R.string.play));
-
-        mMediaPlayer.setOnPreparedListener((mediaPlayer) -> mActionButton.setText(R.string.stop));
+        mMediaTester.switchToAudioOutTestMode(mActionButton);
 
         mActionButton.setText(R.string.play);
-        mActionButton.setOnClickListener(this::playAudio);
+        mActionButton.setOnClickListener((view) -> mMediaTester.playAudio(view, getSelectedOutputAudioSource()));
 
         mSpinner.setAdapter(mOutputAdapter);
     }
 
-    private void setAudioInTestMode()  {
-        mMediaPlayer.reset();
-
-        mMediaPlayer.setOnCompletionListener((mediaPlayer) -> {
-            mMediaPlayer.reset();
-            mActionButton.setText(R.string.record);
-        });
-
-        mMediaPlayer.setOnPreparedListener((mediaPlayer) -> mActionButton.setText(R.string.playing));
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void setAudioInTestMode() {
+        mMediaTester.switchToAudioInTestMode(mActionButton);
 
         mActionButton.setText(R.string.record);
-        mActionButton.setOnClickListener(this::recordMic);
+        mActionButton.setOnClickListener((view) -> mMediaTester.recordMic(mActionButton, getSelectedInputAudioSource()));
 
         mSpinner.setAdapter(mInputAdapter);
     }
 
-    private void initializeAudioHelper() {
-        mAudioHelper = new AudioHelper(this);
-    }
-
-    private void initializeMediaRecorder() {
-        mMediaRecorder = new MediaRecorder();
-    }
-
-    private void initializeMediaPlayer() {
-        mMediaPlayer = new MediaPlayer();
+    private void initializeMediaTester() {
+        mMediaTester = new MediaTester(this);
     }
 
     private void initializeSpinner() {
