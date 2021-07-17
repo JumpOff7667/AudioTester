@@ -1,5 +1,7 @@
 package com.example.audiotester;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -13,8 +15,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int TEST_OUT = 1;
     public static final int TEST_IN = 2;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
     private MediaPlayer mMediaPlayer;
     private MediaRecorder mMediaRecorder;
@@ -37,6 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<CharSequence> mOutputAdapter;
     private ArrayAdapter<CharSequence> mInputAdapter;
 
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
+    private final String [] permissions = {Manifest.permission.RECORD_AUDIO};
+
     @Override
     public void onBackPressed() {
         finishAffinity();
@@ -46,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
 
         initializeAudioHelper();
         initializeMediaPlayer();
@@ -97,6 +108,24 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            permissionToRecordAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        }
+        if (!permissionToRecordAccepted ) finish();
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        mMediaPlayer.release();
+        mMediaRecorder.release();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void recordMic(View view) {
         if (mMediaPlayer.isPlaying()) {
@@ -118,8 +147,9 @@ public class MainActivity extends AppCompatActivity {
 
                 mRecording = false;
                 ((Button) view).setText(R.string.playing);
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
                 e.printStackTrace();
+                mMediaPlayer.reset();
             }
 
             return;
@@ -136,8 +166,9 @@ public class MainActivity extends AppCompatActivity {
 
             mRecording = true;
             ((Button) view).setText(R.string.stop);
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             e.printStackTrace();
+            mMediaRecorder.reset();
         }
 
     }
@@ -188,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             mMediaPlayer.prepare();
             mMediaPlayer.start();
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             e.printStackTrace();
         }
     }
