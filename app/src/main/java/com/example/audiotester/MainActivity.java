@@ -2,12 +2,14 @@ package com.example.audiotester;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
@@ -15,6 +17,7 @@ import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
@@ -23,8 +26,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
-    private Spinner mSpinner;
+    private Spinner mModeSpinner;
+    private Spinner mMainSpinner;
     private Button mActionButton;
+    private SwitchCompat mSpeakerphoneSwitch;
 
     private MediaTester mMediaTester;
     private ArrayAdapter<CharSequence> mOutputAdapter;
@@ -39,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         finishAffinity();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,8 +53,9 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
 
         initializeMediaTester();
-        initializeSpinner();
+        initializeSpinners();
         initializeActionButton();
+        initializeSwitch();
 
         try {
             setAudioOutTestMode();
@@ -64,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.audioInMenuItem) {
@@ -112,16 +119,36 @@ public class MainActivity extends AppCompatActivity {
         mMediaTester.release();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private int getSelectedMode() {
+        switch (mModeSpinner.getSelectedItem().toString()) {
+            case "In call mode":
+                return AudioManager.MODE_IN_CALL;
+            case "In communication mode":
+                return AudioManager.MODE_IN_COMMUNICATION;
+            case "Current mode":
+                return AudioManager.MODE_CURRENT;
+            case "Call screening mode":
+                return AudioManager.MODE_CALL_SCREENING;
+            case "Ringtone mode":
+                return AudioManager.MODE_RINGTONE;
+            case "Invalid mode":
+                return AudioManager.MODE_INVALID;
+            default:
+                return AudioManager.MODE_NORMAL;
+        }
+
+    }
 
     private int getSelectedOutputAudioSource() {
-        return mSpinner.getSelectedItem()
+        return mMainSpinner.getSelectedItem()
                 .toString()
                 .equals("Receiver") ? AudioHelper.TYPE_RECEIVER : AudioHelper.TYPE_SPEAKER;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private int getSelectedInputAudioSource() {
-        switch (mSpinner.getSelectedItem().toString()) {
+        switch (mMainSpinner.getSelectedItem().toString()) {
             case "Camcorder":
                 return MediaRecorder.AudioSource.CAMCORDER;
             case "Mic":
@@ -147,31 +174,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private void setAudioOutTestMode() throws IOException {
         mMediaTester.switchToAudioOutTestMode(mActionButton);
 
+        mSpeakerphoneSwitch.setVisibility(View.GONE);
         mActionButton.setText(R.string.play);
-        mActionButton.setOnClickListener((view) -> mMediaTester.playAudio(view, getSelectedOutputAudioSource()));
+        mActionButton.setOnClickListener((view) -> mMediaTester.playAudio(view, getSelectedOutputAudioSource(), getSelectedMode()));
 
-        mSpinner.setAdapter(mOutputAdapter);
+        mMainSpinner.setAdapter(mOutputAdapter);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private void setAudioInTestMode() {
         mMediaTester.switchToAudioInTestMode(mActionButton);
 
+        mSpeakerphoneSwitch.setVisibility(View.VISIBLE);
         mActionButton.setText(R.string.record);
-        mActionButton.setOnClickListener((view) -> mMediaTester.recordMic(mActionButton, getSelectedInputAudioSource()));
+        mActionButton.setOnClickListener((view) -> mMediaTester.recordMic(mActionButton, getSelectedInputAudioSource(), getSelectedMode(), mSpeakerphoneSwitch.isChecked()));
 
-        mSpinner.setAdapter(mInputAdapter);
+        mMainSpinner.setAdapter(mInputAdapter);
     }
 
     private void initializeMediaTester() {
         mMediaTester = new MediaTester(this);
     }
 
-    private void initializeSpinner() {
-        mSpinner = findViewById(R.id.spinner);
+    private void initializeSpinners() {
+        mMainSpinner = findViewById(R.id.mainSpinner);
+        mModeSpinner = findViewById(R.id.modeSpinner);
 
         mOutputAdapter = ArrayAdapter.createFromResource(this,
                 R.array.outputs_array, android.R.layout.simple_spinner_item);
@@ -180,6 +211,16 @@ public class MainActivity extends AppCompatActivity {
         mInputAdapter = ArrayAdapter.createFromResource(this,
                 R.array.inputs_array, android.R.layout.simple_spinner_item);
         mInputAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        ArrayAdapter<CharSequence> modeAdapter = ArrayAdapter.createFromResource(this,
+                R.array.modes_array, android.R.layout.simple_spinner_item);
+        modeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        mModeSpinner.setAdapter(modeAdapter);
+    }
+
+    private void initializeSwitch() {
+        mSpeakerphoneSwitch = findViewById(R.id.speakerphoneSwitch);
     }
 
     private void initializeActionButton() {

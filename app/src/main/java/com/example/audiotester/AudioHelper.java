@@ -40,15 +40,15 @@ public class AudioHelper {
         context.getLifecycle().addObserver(new LifecycleListener());
     }
 
-    public void setDestination(int type) {
+    public void setDestination(int type, int mode) {
 
         switch (type) {
             case TYPE_RECEIVER: {
-                this.setDestination(AudioManager.MODE_IN_COMMUNICATION, false);
+                this.setDestination(mode, false);
                 break;
             }
             case TYPE_SPEAKER: {
-                this.setDestination(AudioManager.MODE_NORMAL, true);
+                this.setDestination(mode, true);
                 break;
             }
         }

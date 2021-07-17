@@ -42,7 +42,7 @@ public class MediaTester {
         return mTestMode;
     }
 
-    public void playAudio(View view, int selectedOutputSource) {
+    public void playAudio(View view, int selectedOutputSource, int selectedMode) {
         if (mMediaPlayer == null) return;
 
         if (mMediaPlayer.isPlaying()) {
@@ -53,7 +53,7 @@ public class MediaTester {
             return;
         }
 
-        mAudioHelper.setDestination(selectedOutputSource);
+        mAudioHelper.setDestination(selectedOutputSource, selectedMode);
         try {
             mMediaPlayer.prepare();
             mMediaPlayer.start();
@@ -65,7 +65,7 @@ public class MediaTester {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    public void recordMic(View view, int selectedInputSource) {
+    public void recordMic(View view, int selectedInputSource, int selectedMode, boolean speakerphone) {
         if (mMediaRecorder == null) return;
 
         if (mMediaPlayer.isPlaying()) {
@@ -99,6 +99,7 @@ public class MediaTester {
             return;
         }
 
+        mAudioHelper.setDestination(selectedMode, speakerphone);
         mMediaRecorder.setAudioSource(selectedInputSource);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);

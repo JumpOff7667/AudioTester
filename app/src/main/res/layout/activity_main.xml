@@ -16,8 +16,22 @@
         app:layout_constraintStart_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="parent">
 
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/speakerphoneSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="@string/speakerphone"
+            android:visibility="gone" />
+
         <Spinner
-            android:id="@+id/spinner"
+            android:id="@+id/mainSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp" />
+
+        <Spinner
+            android:id="@+id/modeSpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp" />
@@ -25,8 +39,7 @@
         <Button
             android:id="@+id/actionButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Button" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

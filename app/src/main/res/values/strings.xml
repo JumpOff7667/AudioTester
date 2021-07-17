@@ -4,6 +4,7 @@
     <string name="stop">Stop</string>
     <string name="record">Record</string>
     <string name="playing">Playing</string>
+    <string name="speakerphone">Speakerphone</string>
 
     <string-array name="inputs_array">
         <item>Camcorder</item>
@@ -22,5 +23,15 @@
     <string-array name="outputs_array">
         <item>Receiver</item>
         <item>Speaker</item>
+    </string-array>
+
+    <string-array name="modes_array">
+        <item>Normal mode</item>
+        <item>In call mode</item>
+        <item>In communication mode</item>
+        <item>Current mode</item>
+        <item>Call screening mode</item>
+        <item>Ringtone mode</item>
+        <item>Invalid mode</item>
     </string-array>
 </resources>
